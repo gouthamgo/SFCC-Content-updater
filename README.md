@@ -1,0 +1,1 @@
+# SFCC-Content-updater
