@@ -11,7 +11,14 @@ export class ErrorTreeItem extends vscode.TreeItem {
     if (isWorkspaceError) {
       // Special styling for workspace errors
       this.iconPath = new vscode.ThemeIcon('folder-opened', new vscode.ThemeColor('editorInfo.foreground'));
-      this.tooltip = 'Click "File > Open Folder" to open a workspace with dw.json';
+      this.tooltip = 'Click to open a folder';
+
+      // Make it clickable - opens folder picker
+      this.command = {
+        command: 'vscode.openFolder',
+        title: 'Open Folder',
+        arguments: [undefined, false] // undefined = show picker, false = don't open in new window
+      };
     } else {
       this.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('editorWarning.foreground'));
       this.tooltip = message;
