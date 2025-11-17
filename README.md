@@ -113,6 +113,8 @@ Once published, you can install from the VS Code Marketplace.
 
 2. **Fill in your credentials:**
 
+   **IMPORTANT:** This `dw.json` is for the SFCC Content Updater extension and is DIFFERENT from the standard Prophet extension `dw.json`. Do NOT use `code-version` or `cartridge` fields.
+
    ```json
    {
      "hostname": "dev01-realm-customer.demandware.net",
@@ -120,10 +122,17 @@ Once published, you can install from the VS Code Marketplace.
      "password": "your-access-key",
      "clientId": "your-ocapi-client-id",
      "clientSecret": "your-ocapi-client-secret",
-     "contentLibrary": "shared_library",
-     "version": "v23_2"
+     "contentLibrary": "shared_library"
    }
    ```
+
+   **Required fields:**
+   - `hostname` - Your SFCC instance hostname (NO https:// prefix)
+   - `username` - Business Manager username
+   - `password` - Access key from Business Manager
+   - `clientId` - OCAPI Client ID from Account Manager
+   - `clientSecret` - OCAPI Client Secret (the password you set when creating API Client)
+   - `contentLibrary` - Content library ID (see below how to find it)
 
    **How to find your Content Library ID:**
    - In Business Manager, go to: **Merchant Tools > Content > Libraries**
@@ -230,13 +239,14 @@ The status bar shows the current state:
 
 | Field | Required | Description | Example |
 |-------|----------|-------------|---------|
-| `hostname` | Yes | SFCC instance hostname (no protocol) | `dev01-realm-customer.demandware.net` |
+| `hostname` | Yes | SFCC instance hostname (NO http:// or https://) | `dev01-realm-customer.demandware.net` |
 | `username` | Yes | Business Manager username | `user@example.com` |
-| `password` | Yes | Access key or password | `your-access-key` |
-| `clientId` | Yes | OCAPI Client ID from Account Manager | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
-| `clientSecret` | Yes | OCAPI Client Secret (password) | `your-secret` |
-| `contentLibrary` | Yes | Content library ID from BM > Merchant Tools > Content > Libraries | `shared_library` or `SiteGenesis` |
-| `version` | No | OCAPI version (default: v23_2) | `v23_2` |
+| `password` | Yes | Business Manager access key | `your-access-key` |
+| `clientId` | Yes | OCAPI Client ID from Account Manager | `aaaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee` |
+| `clientSecret` | Yes | OCAPI Client Secret (password from API Client) | `your-client-password` |
+| `contentLibrary` | Yes | Content library ID from Merchant Tools > Content > Libraries | `shared_library` |
+
+**Note:** Do NOT include `code-version`, `cartridge`, `version`, or other Prophet extension fields. This extension uses OCAPI, not WebDAV.
 
 ## Roadmap
 
