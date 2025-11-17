@@ -61,6 +61,10 @@ export class ContentAssetService {
    */
   async listContentAssets(): Promise<ContentAssetMetadata[]> {
     const url = `/libraries/${this.config.contentLibrary}/content`;
+    const fullUrl = `${this.axiosInstance.defaults.baseURL}${url}`;
+
+    console.log('Fetching content assets from:', fullUrl);
+    console.log('Content library:', this.config.contentLibrary);
 
     try {
       const response = await this.axiosInstance.get<ContentAssetListResponse>(
@@ -73,8 +77,10 @@ export class ContentAssetService {
         }
       );
 
+      console.log(`Successfully fetched ${response.data.data?.length || 0} content assets`);
       return response.data.data || [];
     } catch (error) {
+      console.error('Failed to fetch content assets:', error);
       this.handleError(error, 'list content assets');
       throw error;
     }
@@ -255,7 +261,8 @@ export class ContentAssetService {
       await this.listContentAssets();
       return true;
     } catch (error) {
-      return false;
+      console.error('Content service test connection failed:', error);
+      throw error; // Re-throw to preserve error details
     }
   }
 
