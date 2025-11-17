@@ -104,53 +104,69 @@ Once published, you can install from the VS Code Marketplace.
 
 ## Setup
 
-1. **Create dw.json in your workspace root:**
+### Quick Start
 
-   Copy `dw.json.example` to `dw.json`:
-   ```bash
-   cp dw.json.example dw.json
-   ```
+1. **Open any folder in VS Code** (or create a new workspace for your SFCC projects)
 
-2. **Fill in your credentials:**
-
-   **IMPORTANT:** This `dw.json` is for the SFCC Content Updater extension and is DIFFERENT from the standard Prophet extension `dw.json`. Do NOT use `code-version` or `cartridge` fields.
-
-   ```json
-   {
-     "hostname": "dev01-realm-customer.demandware.net",
-     "username": "your-business-manager-username",
-     "password": "your-access-key",
-     "clientId": "your-ocapi-client-id",
-     "clientSecret": "your-ocapi-client-secret",
-     "contentLibrary": "shared_library"
-   }
-   ```
-
-   **Required fields:**
-   - `hostname` - Your SFCC instance hostname (NO https:// prefix)
-   - `username` - Business Manager username
-   - `password` - Access key from Business Manager
-   - `clientId` - OCAPI Client ID from Account Manager
-   - `clientSecret` - OCAPI Client Secret (the password you set when creating API Client)
-   - `contentLibrary` - Content library ID (see below how to find it)
-
-   **How to find your Content Library ID:**
-   - In Business Manager, go to: **Merchant Tools > Content > Libraries**
-   - You'll see a list of libraries (e.g., `shared_library`, `SiteGenesis`, etc.)
-   - Copy the **exact ID** (case-sensitive) of the library you want to work with
-   - Or navigate to: **Merchant Tools > Content > Content Assets**
-   - Click on the library you use (e.g., `shared_library`)
-   - The library ID will be in the breadcrumb: **Libraries > `shared_library` > Content**
-
-   **Important:** Add `dw.json` to your `.gitignore` to protect your credentials!
-
-3. **Reload VS Code:**
+2. **Run the configuration command:**
    - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
-   - Type "Reload Window"
+   - Type: `SFCC: Configure Connection`
+   - Hit Enter
 
-4. **Check the sidebar:**
-   - You should see a new "SFCC Content" icon in the activity bar
-   - Click it to view your content assets
+3. **Enter your credentials** (guided multi-step setup):
+   - **Hostname**: Your SFCC instance (e.g., `dev01-realm-customer.demandware.net`)
+     - ⚠️ Do NOT include `https://`
+   - **Content Library**: Library ID (e.g., `shared_library`)
+   - **Username**: Business Manager username
+   - **Password**: Access key or password
+   - **Client ID**: OCAPI Client ID from Account Manager
+   - **Client Secret**: OCAPI Client Secret
+
+4. **Done!** The extension will:
+   - Store credentials securely in your OS keychain/credential manager
+   - Save workspace settings (hostname, library) to `.vscode/settings.json`
+   - Connect to SFCC automatically
+   - Show content assets in the sidebar
+
+### How to Find Your Content Library ID
+
+Navigate in Business Manager:
+1. **Merchant Tools > Content > Libraries**
+2. You'll see libraries like `shared_library`, `SiteGenesis`, etc.
+3. Copy the **exact ID** (case-sensitive)
+
+Or:
+1. **Merchant Tools > Content > Content Assets**
+2. Click your library (e.g., `shared_library`)
+3. The library ID appears in the breadcrumb: **Libraries > `shared_library` > Content**
+
+### Security Notes
+
+✅ **Credentials are stored securely:**
+- Passwords and API secrets are encrypted in your OS-native credential manager
+  - **macOS**: Keychain Access
+  - **Windows**: Credential Manager (DPAPI)
+  - **Linux**: Secret Service API/libsecret
+- Only non-sensitive settings (hostname, library) are saved to workspace settings
+- Credentials never touch the filesystem as plaintext
+- Safe from accidental git commits
+
+### Workspace Settings (Optional)
+
+After running "SFCC: Configure Connection", a `.vscode/settings.json` file is created in your workspace:
+
+```json
+{
+  "sfccContentUpdater.hostname": "dev01-realm-customer.demandware.net",
+  "sfccContentUpdater.contentLibrary": "shared_library"
+}
+```
+
+You can commit this file to share project settings with your team (credentials remain private per developer).
+
+### Check Connection
+
+Click the "SFCC Content" icon in the sidebar to view your content assets. If you see a gear icon, click it to configure the connection.
 
 ## Usage
 
@@ -195,6 +211,8 @@ Click the refresh icon in the tree view header to reload the content asset list.
 
 | Command | Shortcut | Description |
 |---------|----------|-------------|
+| `SFCC: Configure Connection` | - | Set up or update SFCC credentials |
+| `SFCC: Clear Stored Credentials` | - | Remove stored credentials from keychain |
 | `SFCC: Refresh Content Assets` | - | Reload the content asset tree |
 | `SFCC: Push to SFCC` | `Ctrl+Shift+U` | Upload current document to SFCC |
 | `SFCC: Pull from SFCC` | - | Download latest version from SFCC |

@@ -22,6 +22,24 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "SFCC Content Updater",
+      "properties": {
+        "sfccContentUpdater.hostname": {
+          "type": "string",
+          "description": "SFCC instance hostname (without https://). Example: dev01-realm-customer.demandware.net",
+          "scope": "resource",
+          "order": 1
+        },
+        "sfccContentUpdater.contentLibrary": {
+          "type": "string",
+          "default": "shared_library",
+          "description": "Content library ID to work with",
+          "scope": "resource",
+          "order": 2
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -40,6 +58,15 @@
       ]
     },
     "commands": [
+      {
+        "command": "sfccContentUpdater.configure",
+        "title": "SFCC: Configure Connection",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "sfccContentUpdater.clearCredentials",
+        "title": "SFCC: Clear Stored Credentials"
+      },
       {
         "command": "sfccContentUpdater.refresh",
         "title": "SFCC: Refresh Content Assets",

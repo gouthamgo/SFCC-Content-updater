@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigService } from './services/config.service';
+import { CredentialService } from './services/credential.service';
 import { AuthService } from './services/auth.service';
 import { ContentAssetService } from './services/content.service';
 import {
@@ -11,6 +12,7 @@ import { ContentAsset, ContentAssetMetadata } from './models/config.model';
 
 // Global services
 let configService: ConfigService;
+let credentialService: CredentialService;
 let authService: AuthService;
 let contentService: ContentAssetService;
 let contentTreeProvider: ContentTreeProvider | EmptyTreeProvider;
@@ -26,46 +28,24 @@ const dirtyDocuments = new Set<string>();
 export async function activate(context: vscode.ExtensionContext) {
   console.log('SFCC Content Updater is activating...');
 
-  // Initialize configuration service
+  // Initialize services
+  CredentialService.init(context);
+  credentialService = CredentialService.getInstance();
   configService = ConfigService.getInstance();
 
   // Register commands first (they can be called even if config fails)
   registerCommands(context);
 
-  // Check if workspace is open
-  if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
-    // No workspace open - show helpful message
-    const emptyTreeProvider = new EmptyTreeProvider(
-      'Open a folder with dw.json (File > Open Folder)',
-      true
-    );
-    vscode.window.registerTreeDataProvider(
-      'sfccContentAssets',
-      emptyTreeProvider
-    );
-
-    // Listen for workspace folder changes
-    context.subscriptions.push(
-      vscode.workspace.onDidChangeWorkspaceFolders(() => {
-        // Workspace changed - try to initialize
-        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-          initializeExtension(context);
-        }
-      })
-    );
-
-    console.log('No workspace open. Waiting for user to open a folder...');
-    return;
-  }
-
-  // Workspace is open - initialize
+  // Try to initialize extension (may fail if not configured)
   await initializeExtension(context);
 }
 
 /**
  * Initialize the extension with SFCC connection
  */
-async function initializeExtension(context: vscode.ExtensionContext): Promise<void> {
+async function initializeExtension(
+  context: vscode.ExtensionContext
+): Promise<void> {
   try {
     const config = await configService.loadConfig();
 
@@ -103,20 +83,35 @@ async function initializeExtension(context: vscode.ExtensionContext): Promise<vo
       `✅ SFCC Content Updater connected to ${config.hostname}`
     );
   } catch (error: any) {
-    // Configuration error - show but still register tree view with error message
-    vscode.window.showErrorMessage(
-      `SFCC Content Updater: ${error.message}`
-    );
+    console.error('Failed to initialize SFCC connection:', error);
 
-    // Register empty tree view that shows the error
-    const emptyTreeProvider = new EmptyTreeProvider(error.message, false);
+    // Show helpful error message based on the error
+    let errorMessage = error.message;
+    let showConfigureButton = false;
+
+    if (
+      error.message.includes('Missing SFCC configuration') ||
+      error.message.includes('credentials')
+    ) {
+      errorMessage = '⚙️ Configure SFCC Connection';
+      showConfigureButton = true;
+    }
+
+    // Register empty tree view
+    const emptyTreeProvider = new EmptyTreeProvider(
+      errorMessage,
+      showConfigureButton
+    );
     vscode.window.registerTreeDataProvider(
       'sfccContentAssets',
       emptyTreeProvider
     );
     contentTreeProvider = emptyTreeProvider;
 
-    console.error('Failed to initialize SFCC connection:', error);
+    // Only show notification if it's a real error (not just "not configured")
+    if (!showConfigureButton) {
+      vscode.window.showErrorMessage(`SFCC: ${error.message}`);
+    }
   }
 }
 
@@ -146,14 +141,180 @@ async function testConnection(): Promise<void> {
 }
 
 /**
+ * Configure SFCC connection with multi-step input
+ */
+async function configureConnection(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  try {
+    // Step 1: Hostname
+    const hostname = await vscode.window.showInputBox({
+      prompt: 'Enter SFCC hostname (without https://)',
+      placeHolder: 'dev01-realm-customer.demandware.net',
+      validateInput: (value) => {
+        if (!value) {
+          return 'Hostname is required';
+        }
+        if (value.includes('://')) {
+          return "Don't include protocol (http:// or https://)";
+        }
+        return null;
+      }
+    });
+
+    if (!hostname) {
+      return; // User cancelled
+    }
+
+    // Step 2: Content Library
+    const library = await vscode.window.showInputBox({
+      prompt: 'Enter content library ID',
+      placeHolder: 'shared_library',
+      value: 'shared_library'
+    });
+
+    if (!library) {
+      return;
+    }
+
+    // Step 3: Username
+    const username = await vscode.window.showInputBox({
+      prompt: 'Enter Business Manager username',
+      placeHolder: 'user@example.com'
+    });
+
+    if (!username) {
+      return;
+    }
+
+    // Step 4: Password
+    const password = await vscode.window.showInputBox({
+      prompt: 'Enter access key or password',
+      password: true,
+      placeHolder: '(hidden)'
+    });
+
+    if (!password) {
+      return;
+    }
+
+    // Step 5: Client ID
+    const clientId = await vscode.window.showInputBox({
+      prompt: 'Enter OCAPI Client ID',
+      placeHolder: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    });
+
+    if (!clientId) {
+      return;
+    }
+
+    // Step 6: Client Secret
+    const clientSecret = await vscode.window.showInputBox({
+      prompt: 'Enter OCAPI Client Secret',
+      password: true,
+      placeHolder: '(hidden)'
+    });
+
+    if (!clientSecret) {
+      return;
+    }
+
+    // Save to workspace settings (non-sensitive)
+    const workspaceConfig = vscode.workspace.getConfiguration(
+      'sfccContentUpdater'
+    );
+    await workspaceConfig.update(
+      'hostname',
+      hostname,
+      vscode.ConfigurationTarget.Workspace
+    );
+    await workspaceConfig.update(
+      'contentLibrary',
+      library,
+      vscode.ConfigurationTarget.Workspace
+    );
+
+    // Save to SecretStorage (sensitive)
+    await credentialService.storeCredentials({
+      username,
+      password,
+      clientId,
+      clientSecret
+    });
+
+    vscode.window.showInformationMessage(
+      '✅ SFCC configuration saved! Connecting...'
+    );
+
+    // Reinitialize extension with new config
+    await initializeExtension(context);
+  } catch (error: any) {
+    vscode.window.showErrorMessage(
+      `Failed to configure SFCC: ${error.message}`
+    );
+  }
+}
+
+/**
+ * Clear stored credentials
+ */
+async function clearCredentials(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  const confirm = await vscode.window.showWarningMessage(
+    'This will clear all stored SFCC credentials. Continue?',
+    'Clear',
+    'Cancel'
+  );
+
+  if (confirm === 'Clear') {
+    await credentialService.clearCredentials();
+    vscode.window.showInformationMessage('SFCC credentials cleared');
+
+    // Show empty tree with setup message
+    const emptyTreeProvider = new EmptyTreeProvider(
+      'Run "SFCC: Configure Connection" to set up',
+      false
+    );
+    vscode.window.registerTreeDataProvider(
+      'sfccContentAssets',
+      emptyTreeProvider
+    );
+    contentTreeProvider = emptyTreeProvider;
+  }
+}
+
+/**
  * Register all extension commands
  */
 function registerCommands(context: vscode.ExtensionContext): void {
+  // Configure connection
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'sfccContentUpdater.configure',
+      async () => {
+        await configureConnection(context);
+      }
+    )
+  );
+
+  // Clear credentials
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'sfccContentUpdater.clearCredentials',
+      async () => {
+        await clearCredentials(context);
+      }
+    )
+  );
+
   // Refresh tree view
   context.subscriptions.push(
     vscode.commands.registerCommand('sfccContentUpdater.refresh', async () => {
-      contentTreeProvider.refresh();
-      vscode.window.showInformationMessage('Content assets refreshed');
+      if (contentTreeProvider) {
+        contentTreeProvider.refresh();
+        vscode.window.showInformationMessage('Content assets refreshed');
+      }
     })
   );
 
