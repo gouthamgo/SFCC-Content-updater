@@ -217,20 +217,42 @@ export class ContentAssetService {
           `Permission denied for: ${operation}.\n\n` +
             'OCAPI permissions required:\n' +
             '1. Business Manager → Administration → Site Development → Open Commerce API Settings\n' +
-            '2. Select Type: Data API\n' +
-            '3. Add this to your configuration:\n' +
-            '   {\n' +
-            '     "client_id": "your-client-id",\n' +
-            '     "resources": [\n' +
-            '       {\n' +
-            '         "resource_id": "/libraries/*/content/**",\n' +
-            '         "methods": ["get", "patch", "put"],\n' +
-            '         "read_attributes": "(**)",\n' +
-            '         "write_attributes": "(**)"\n' +
-            '       }\n' +
-            '     ]\n' +
-            '   }\n' +
-            '4. Wait 3 minutes for changes to take effect'
+            '2. Select Type: Data API, Context: Global\n' +
+            '3. Add this complete configuration:\n\n' +
+            '{\n' +
+            '  "_v": "23.2",\n' +
+            '  "clients": [{\n' +
+            '    "client_id": "YOUR_CLIENT_ID",\n' +
+            '    "resources": [\n' +
+            '      {\n' +
+            '        "resource_id": "/libraries/*/content/*",\n' +
+            '        "methods": ["get", "patch", "put", "delete"],\n' +
+            '        "read_attributes": "(**)",\n' +
+            '        "write_attributes": "(**)"\n' +
+            '      },\n' +
+            '      {\n' +
+            '        "resource_id": "/libraries/*/content",\n' +
+            '        "methods": ["get", "post"],\n' +
+            '        "read_attributes": "(**)",\n' +
+            '        "write_attributes": "(**)"\n' +
+            '      },\n' +
+            '      {\n' +
+            '        "resource_id": "/libraries/*/content_search",\n' +
+            '        "methods": ["post"],\n' +
+            '        "read_attributes": "(**)",\n' +
+            '        "write_attributes": "(**)"\n' +
+            '      },\n' +
+            '      {\n' +
+            '        "resource_id": "/libraries/*",\n' +
+            '        "methods": ["get"],\n' +
+            '        "read_attributes": "(**)",\n' +
+            '        "write_attributes": "(**)"\n' +
+            '      }\n' +
+            '    ]\n' +
+            '  }]\n' +
+            '}\n\n' +
+            '4. Wait 3 minutes for cache to clear\n' +
+            '5. This configuration works for ALL organizations - wildcards are universal'
         );
       }
 

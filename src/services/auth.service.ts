@@ -131,9 +131,10 @@ export class AuthService {
         throw new Error(
           'OCAPI permissions not configured. Required steps:\n' +
             '1. Business Manager → Administration → Site Development → Open Commerce API Settings\n' +
-            '2. Select Type: Data API\n' +
-            '3. Add your Client ID with /libraries/*/content/* permissions\n' +
-            '4. Wait 3 minutes for cache to clear'
+            '2. Select Type: Data API, Context: Global\n' +
+            '3. Add your Client ID with proper resource permissions (see README.md)\n' +
+            '4. Wait 3 minutes for cache to clear\n' +
+            '5. Note: Wildcards (*) work for ALL SFCC organizations'
         );
       }
 

@@ -52,13 +52,19 @@ Configure OCAPI Data API permissions in **Business Manager**:
       "resources": [
         {
           "resource_id": "/libraries/*/content/*",
-          "methods": ["get"],
+          "methods": ["get", "patch", "put", "delete"],
           "read_attributes": "(**)",
           "write_attributes": "(**)"
         },
         {
           "resource_id": "/libraries/*/content",
-          "methods": ["post", "put", "patch"],
+          "methods": ["get", "post"],
+          "read_attributes": "(**)",
+          "write_attributes": "(**)"
+        },
+        {
+          "resource_id": "/libraries/*/content_search",
+          "methods": ["post"],
           "read_attributes": "(**)",
           "write_attributes": "(**)"
         },
@@ -74,7 +80,15 @@ Configure OCAPI Data API permissions in **Business Manager**:
 }
 ```
 
-   **Note:** The `*` wildcard in `/libraries/*/content/*` means this configuration works for **all libraries** (e.g., `shared_library`, `SiteGenesis`, etc.). You don't need to change this even if your library name is different.
+   **Important Notes:**
+   - The `*` wildcard works for **all SFCC organizations** - you don't need to change this based on your org
+   - **Wait 3 minutes** after saving for the configuration to take effect (OCAPI settings are cached)
+   - Replace `YOUR_CLIENT_ID_HERE` with your actual Client ID from Account Manager
+   - This configuration grants:
+     - **Read/Update/Delete** individual content assets (`/libraries/*/content/*`)
+     - **List/Create** content assets (`/libraries/*/content`)
+     - **Search** content assets (`/libraries/*/content_search`)
+     - **Get** library information (`/libraries/*`)
 
 ## Installation
 
