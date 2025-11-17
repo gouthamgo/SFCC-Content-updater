@@ -1,0 +1,109 @@
+{
+  "name": "sfcc-content-updater",
+  "displayName": "SFCC Content Updater",
+  "description": "Update Salesforce Commerce Cloud content assets directly from VS Code",
+  "version": "0.1.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "sfcc",
+    "salesforce",
+    "commerce cloud",
+    "content assets",
+    "demandware"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sfcc-content-explorer",
+          "title": "SFCC Content",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "sfcc-content-explorer": [
+        {
+          "id": "sfccContentAssets",
+          "name": "Content Assets"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sfccContentUpdater.refresh",
+        "title": "SFCC: Refresh Content Assets",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sfccContentUpdater.openAsset",
+        "title": "SFCC: Open Content Asset"
+      },
+      {
+        "command": "sfccContentUpdater.push",
+        "title": "SFCC: Push to SFCC",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "sfccContentUpdater.pull",
+        "title": "SFCC: Pull from SFCC",
+        "icon": "$(cloud-download)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sfccContentUpdater.refresh",
+          "when": "view == sfccContentAssets",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "sfccContentUpdater.push",
+          "when": "resourceScheme == untitled || resourceScheme == file",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "sfccContentUpdater.push",
+        "key": "ctrl+shift+u",
+        "mac": "cmd+shift+u",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "axios-retry": "^4.0.0"
+  }
+}
