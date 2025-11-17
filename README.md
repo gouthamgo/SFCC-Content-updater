@@ -74,6 +74,8 @@ Configure OCAPI Data API permissions in **Business Manager**:
 }
 ```
 
+   **Note:** The `*` wildcard in `/libraries/*/content/*` means this configuration works for **all libraries** (e.g., `shared_library`, `SiteGenesis`, etc.). You don't need to change this even if your library name is different.
+
 ## Installation
 
 ### From Source (Development)
@@ -118,10 +120,18 @@ Once published, you can install from the VS Code Marketplace.
      "password": "your-access-key",
      "clientId": "your-ocapi-client-id",
      "clientSecret": "your-ocapi-client-secret",
-     "contentLibrary": "SiteGenesis",
+     "contentLibrary": "shared_library",
      "version": "v23_2"
    }
    ```
+
+   **How to find your Content Library ID:**
+   - In Business Manager, go to: **Merchant Tools > Content > Libraries**
+   - You'll see a list of libraries (e.g., `shared_library`, `SiteGenesis`, etc.)
+   - Copy the **exact ID** (case-sensitive) of the library you want to work with
+   - Or navigate to: **Merchant Tools > Content > Content Assets**
+   - Click on the library you use (e.g., `shared_library`)
+   - The library ID will be in the breadcrumb: **Libraries > `shared_library` > Content**
 
    **Important:** Add `dw.json` to your `.gitignore` to protect your credentials!
 
@@ -225,7 +235,7 @@ The status bar shows the current state:
 | `password` | Yes | Access key or password | `your-access-key` |
 | `clientId` | Yes | OCAPI Client ID from Account Manager | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
 | `clientSecret` | Yes | OCAPI Client Secret (password) | `your-secret` |
-| `contentLibrary` | Yes | Content library ID | `SiteGenesis` |
+| `contentLibrary` | Yes | Content library ID from BM > Merchant Tools > Content > Libraries | `shared_library` or `SiteGenesis` |
 | `version` | No | OCAPI version (default: v23_2) | `v23_2` |
 
 ## Roadmap

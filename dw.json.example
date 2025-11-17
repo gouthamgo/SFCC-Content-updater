@@ -4,6 +4,6 @@
   "password": "your-access-key-or-password",
   "clientId": "your-ocapi-client-id",
   "clientSecret": "your-ocapi-client-secret",
-  "contentLibrary": "SiteGenesis",
+  "contentLibrary": "shared_library",
   "version": "v23_2"
 }
