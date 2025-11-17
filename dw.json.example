@@ -1,0 +1,9 @@
+{
+  "hostname": "dev01-realm-customer.demandware.net",
+  "username": "your-business-manager-username",
+  "password": "your-access-key-or-password",
+  "clientId": "your-ocapi-client-id",
+  "clientSecret": "your-ocapi-client-secret",
+  "contentLibrary": "SiteGenesis",
+  "version": "v23_2"
+}
