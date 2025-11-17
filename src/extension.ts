@@ -6,6 +6,7 @@ import {
   ContentTreeProvider,
   ContentAssetTreeItem
 } from './providers/contentTree.provider';
+import { EmptyTreeProvider } from './providers/emptyTree.provider';
 import { ContentAsset, ContentAssetMetadata } from './models/config.model';
 
 // Global services
@@ -29,7 +30,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize configuration service
     configService = ConfigService.getInstance();
 
-    // Try to load configuration
+    // Register commands first (they can be called even if config fails)
+    registerCommands(context);
+
+    // Try to load configuration and connect
     try {
       const config = await configService.loadConfig();
 
@@ -39,15 +43,15 @@ export async function activate(context: vscode.ExtensionContext) {
       // Initialize content service
       contentService = new ContentAssetService(config, authService);
 
-      // Test connection
-      await testConnection();
-
       // Initialize tree view
       contentTreeProvider = new ContentTreeProvider(contentService);
       vscode.window.registerTreeDataProvider(
         'sfccContentAssets',
         contentTreeProvider
       );
+
+      // Test connection
+      await testConnection();
 
       // Create status bar item
       statusBarItem = vscode.window.createStatusBarItem(
@@ -59,9 +63,6 @@ export async function activate(context: vscode.ExtensionContext) {
       statusBarItem.show();
       context.subscriptions.push(statusBarItem);
 
-      // Register all commands
-      registerCommands(context);
-
       // Register document change listeners
       registerDocumentListeners(context);
 
@@ -69,10 +70,19 @@ export async function activate(context: vscode.ExtensionContext) {
         `✅ SFCC Content Updater connected to ${config.hostname}`
       );
     } catch (error: any) {
-      // Configuration error - show but don't crash
-      vscode.window.showWarningMessage(
-        `SFCC Content Updater: ${error.message}`
+      // Configuration error - show but still register tree view with error message
+      vscode.window.showErrorMessage(
+        `SFCC Content Updater: ${error.message}. Please check your dw.json file.`
       );
+
+      // Register empty tree view that shows the error
+      const emptyTreeProvider = new EmptyTreeProvider(error.message);
+      vscode.window.registerTreeDataProvider(
+        'sfccContentAssets',
+        emptyTreeProvider
+      );
+
+      console.error('Failed to initialize SFCC connection:', error);
     }
   } catch (error: any) {
     vscode.window.showErrorMessage(
