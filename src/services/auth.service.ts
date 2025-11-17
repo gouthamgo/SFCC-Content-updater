@@ -48,6 +48,9 @@ export class AuthService {
   private async requestNewToken(): Promise<string> {
     const tokenUrl = `https://${this.config.hostname}/dw/oauth2/access_token`;
 
+    console.log('Requesting OAuth token from:', tokenUrl);
+    console.log('Using clientId:', this.config.clientId);
+
     try {
       // Prepare request body
       const params = new URLSearchParams();
@@ -69,6 +72,8 @@ export class AuthService {
         }
       );
 
+      console.log('OAuth token received successfully');
+
       // Store token and expiry
       this.accessToken = response.data.access_token;
 
@@ -78,6 +83,7 @@ export class AuthService {
 
       return this.accessToken;
     } catch (error) {
+      console.error('OAuth token request failed:', error);
       this.handleAuthError(error);
       throw error; // Re-throw after handling
     }

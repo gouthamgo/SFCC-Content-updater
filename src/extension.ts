@@ -133,15 +133,14 @@ async function testConnection(): Promise<void> {
     async (progress) => {
       progress.report({ increment: 50 });
 
-      const isConnected = await contentService.testConnection();
-
-      if (!isConnected) {
-        throw new Error(
-          'Failed to connect to SFCC. Please check your credentials and OCAPI permissions.'
-        );
+      try {
+        await contentService.testConnection();
+        progress.report({ increment: 100 });
+      } catch (error: any) {
+        console.error('SFCC connection test failed:', error);
+        // Re-throw with preserved error message
+        throw error;
       }
-
-      progress.report({ increment: 100 });
     }
   );
 }
