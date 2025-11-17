@@ -46,12 +46,18 @@ export class AuthService {
    * Request new OAuth access token using Client Credentials Grant
    */
   private async requestNewToken(): Promise<string> {
-    const tokenUrl = `https://${this.config.hostname}/dw/oauth2/access_token`;
+    // IMPORTANT: Client Credentials Grant uses account.demandware.com
+    // NOT the instance hostname!
+    const tokenUrl = 'https://account.demandware.com/dw/oauth2/access_token';
 
     console.log('Requesting OAuth token from:', tokenUrl);
     console.log('Using clientId:', this.config.clientId);
 
     try {
+      // Prepare credentials for Basic Auth
+      const credentials = `${this.config.clientId}:${this.config.clientSecret}`;
+      const encodedCredentials = Buffer.from(credentials).toString('base64');
+
       // Prepare request body
       const params = new URLSearchParams();
       params.append('grant_type', 'client_credentials');
@@ -61,11 +67,8 @@ export class AuthService {
         tokenUrl,
         params,
         {
-          auth: {
-            username: this.config.clientId,
-            password: this.config.clientSecret
-          },
           headers: {
+            'Authorization': `Basic ${encodedCredentials}`,
             'Content-Type': 'application/x-www-form-urlencoded'
           },
           timeout: 10000 // 10 second timeout
@@ -110,16 +113,27 @@ export class AuthService {
       }
 
       if (axiosError.response?.status === 401) {
+        const errorData = axiosError.response?.data as any;
+        if (errorData?.error === 'invalid_client') {
+          throw new Error(
+            'Invalid client credentials. Check:\n' +
+              '1. Client ID and Secret are correct (from Account Manager → API Client)\n' +
+              '2. Token Endpoint Auth Method = "client_secret_basic" in Account Manager\n' +
+              '3. Client has correct Organizations assigned'
+          );
+        }
         throw new Error(
-          'Authentication failed: Invalid client credentials. ' +
-          'Please check your clientId and clientSecret in dw.json'
+          'Authentication failed (401). Verify your OCAPI Client ID and Secret.'
         );
       }
 
       if (axiosError.response?.status === 403) {
         throw new Error(
-          'Authentication forbidden: Your API client may not have the required permissions. ' +
-          'Please check OCAPI settings in Business Manager.'
+          'OCAPI permissions not configured. Required steps:\n' +
+            '1. Business Manager → Administration → Site Development → Open Commerce API Settings\n' +
+            '2. Select Type: Data API\n' +
+            '3. Add your Client ID with /libraries/*/content/* permissions\n' +
+            '4. Wait 3 minutes for cache to clear'
         );
       }
 

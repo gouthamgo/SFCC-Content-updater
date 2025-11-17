@@ -2,10 +2,9 @@ import * as vscode from 'vscode';
 
 /**
  * SFCC Credentials stored in SecretStorage
+ * Using Client Credentials Grant (server-to-server OAuth)
  */
 export interface SFCCCredentials {
-  username: string;
-  password: string;
   clientId: string;
   clientSecret: string;
 }
@@ -20,8 +19,6 @@ export class CredentialService {
   private secrets: vscode.SecretStorage;
 
   private static readonly KEYS = {
-    USERNAME: 'sfcc.username',
-    PASSWORD: 'sfcc.password',
     CLIENT_ID: 'sfcc.clientId',
     CLIENT_SECRET: 'sfcc.clientSecret'
   };
@@ -53,32 +50,22 @@ export class CredentialService {
    * Get stored credentials
    */
   async getCredentials(): Promise<SFCCCredentials | null> {
-    const username = await this.secrets.get(CredentialService.KEYS.USERNAME);
-    const password = await this.secrets.get(CredentialService.KEYS.PASSWORD);
     const clientId = await this.secrets.get(CredentialService.KEYS.CLIENT_ID);
     const clientSecret = await this.secrets.get(
       CredentialService.KEYS.CLIENT_SECRET
     );
 
-    if (!username || !password || !clientId || !clientSecret) {
+    if (!clientId || !clientSecret) {
       return null;
     }
 
-    return { username, password, clientId, clientSecret };
+    return { clientId, clientSecret };
   }
 
   /**
    * Store credentials securely
    */
   async storeCredentials(credentials: SFCCCredentials): Promise<void> {
-    await this.secrets.store(
-      CredentialService.KEYS.USERNAME,
-      credentials.username
-    );
-    await this.secrets.store(
-      CredentialService.KEYS.PASSWORD,
-      credentials.password
-    );
     await this.secrets.store(
       CredentialService.KEYS.CLIENT_ID,
       credentials.clientId
@@ -93,8 +80,6 @@ export class CredentialService {
    * Clear all stored credentials
    */
   async clearCredentials(): Promise<void> {
-    await this.secrets.delete(CredentialService.KEYS.USERNAME);
-    await this.secrets.delete(CredentialService.KEYS.PASSWORD);
     await this.secrets.delete(CredentialService.KEYS.CLIENT_ID);
     await this.secrets.delete(CredentialService.KEYS.CLIENT_SECRET);
   }

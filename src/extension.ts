@@ -150,7 +150,7 @@ async function configureConnection(
     // Step 1: Hostname
     const hostname = await vscode.window.showInputBox({
       prompt: 'Enter SFCC hostname (without https://)',
-      placeHolder: 'dev01-realm-customer.demandware.net',
+      placeHolder: 'mysite-001.sandbox.us01.dx.commercecloud.salesforce.com',
       validateInput: (value) => {
         if (!value) {
           return 'Hostname is required';
@@ -177,42 +177,34 @@ async function configureConnection(
       return;
     }
 
-    // Step 3: Username
-    const username = await vscode.window.showInputBox({
-      prompt: 'Enter Business Manager username',
-      placeHolder: 'user@example.com'
-    });
-
-    if (!username) {
-      return;
-    }
-
-    // Step 4: Password
-    const password = await vscode.window.showInputBox({
-      prompt: 'Enter access key or password',
-      password: true,
-      placeHolder: '(hidden)'
-    });
-
-    if (!password) {
-      return;
-    }
-
-    // Step 5: Client ID
+    // Step 3: Client ID (from Account Manager)
     const clientId = await vscode.window.showInputBox({
-      prompt: 'Enter OCAPI Client ID',
-      placeHolder: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+      prompt: 'Enter OCAPI Client ID (from Account Manager → API Client)',
+      placeHolder: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      validateInput: (value) => {
+        if (!value) {
+          return 'Client ID is required';
+        }
+        return null;
+      }
     });
 
     if (!clientId) {
       return;
     }
 
-    // Step 6: Client Secret
+    // Step 4: Client Secret (from Account Manager)
     const clientSecret = await vscode.window.showInputBox({
-      prompt: 'Enter OCAPI Client Secret',
+      prompt:
+        'Enter OCAPI Client Secret (password set when creating API Client)',
       password: true,
-      placeHolder: '(hidden)'
+      placeHolder: '(hidden)',
+      validateInput: (value) => {
+        if (!value) {
+          return 'Client Secret is required';
+        }
+        return null;
+      }
     });
 
     if (!clientSecret) {
@@ -236,14 +228,12 @@ async function configureConnection(
 
     // Save to SecretStorage (sensitive)
     await credentialService.storeCredentials({
-      username,
-      password,
       clientId,
       clientSecret
     });
 
     vscode.window.showInformationMessage(
-      '✅ SFCC configuration saved! Connecting...'
+      '✅ SFCC credentials saved! Connecting to SFCC...'
     );
 
     // Reinitialize extension with new config

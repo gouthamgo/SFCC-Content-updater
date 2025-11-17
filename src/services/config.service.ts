@@ -67,8 +67,8 @@ export class ConfigService {
     this.config = {
       hostname: hostname!,
       contentLibrary,
-      username: credentials!.username,
-      password: credentials!.password,
+      username: '', // Not used in Client Credentials Grant
+      password: '', // Not used in Client Credentials Grant
       clientId: credentials!.clientId,
       clientSecret: credentials!.clientSecret,
       version: 'v23_2'

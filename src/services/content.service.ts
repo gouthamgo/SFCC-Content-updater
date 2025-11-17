@@ -214,8 +214,23 @@ export class ContentAssetService {
 
       if (axiosError.response?.status === 403) {
         throw new Error(
-          `Permission denied. Your API client may not have access to ${operation}. ` +
-          'Please check OCAPI permissions in Business Manager.'
+          `Permission denied for: ${operation}.\n\n` +
+            'OCAPI permissions required:\n' +
+            '1. Business Manager → Administration → Site Development → Open Commerce API Settings\n' +
+            '2. Select Type: Data API\n' +
+            '3. Add this to your configuration:\n' +
+            '   {\n' +
+            '     "client_id": "your-client-id",\n' +
+            '     "resources": [\n' +
+            '       {\n' +
+            '         "resource_id": "/libraries/*/content/**",\n' +
+            '         "methods": ["get", "patch", "put"],\n' +
+            '         "read_attributes": "(**)",\n' +
+            '         "write_attributes": "(**)"\n' +
+            '       }\n' +
+            '     ]\n' +
+            '   }\n' +
+            '4. Wait 3 minutes for changes to take effect'
         );
       }
 
