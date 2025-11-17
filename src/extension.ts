@@ -13,7 +13,7 @@ import { ContentAsset, ContentAssetMetadata } from './models/config.model';
 let configService: ConfigService;
 let authService: AuthService;
 let contentService: ContentAssetService;
-let contentTreeProvider: ContentTreeProvider;
+let contentTreeProvider: ContentTreeProvider | EmptyTreeProvider;
 let statusBarItem: vscode.StatusBarItem;
 
 // Track open documents and their associated assets
@@ -26,68 +26,97 @@ const dirtyDocuments = new Set<string>();
 export async function activate(context: vscode.ExtensionContext) {
   console.log('SFCC Content Updater is activating...');
 
-  try {
-    // Initialize configuration service
-    configService = ConfigService.getInstance();
+  // Initialize configuration service
+  configService = ConfigService.getInstance();
 
-    // Register commands first (they can be called even if config fails)
-    registerCommands(context);
+  // Register commands first (they can be called even if config fails)
+  registerCommands(context);
 
-    // Try to load configuration and connect
-    try {
-      const config = await configService.loadConfig();
-
-      // Initialize authentication service
-      authService = new AuthService(config);
-
-      // Initialize content service
-      contentService = new ContentAssetService(config, authService);
-
-      // Initialize tree view
-      contentTreeProvider = new ContentTreeProvider(contentService);
-      vscode.window.registerTreeDataProvider(
-        'sfccContentAssets',
-        contentTreeProvider
-      );
-
-      // Test connection
-      await testConnection();
-
-      // Create status bar item
-      statusBarItem = vscode.window.createStatusBarItem(
-        vscode.StatusBarAlignment.Right,
-        100
-      );
-      statusBarItem.text = '$(cloud) SFCC';
-      statusBarItem.tooltip = `Connected to ${config.hostname}`;
-      statusBarItem.show();
-      context.subscriptions.push(statusBarItem);
-
-      // Register document change listeners
-      registerDocumentListeners(context);
-
-      vscode.window.showInformationMessage(
-        `✅ SFCC Content Updater connected to ${config.hostname}`
-      );
-    } catch (error: any) {
-      // Configuration error - show but still register tree view with error message
-      vscode.window.showErrorMessage(
-        `SFCC Content Updater: ${error.message}. Please check your dw.json file.`
-      );
-
-      // Register empty tree view that shows the error
-      const emptyTreeProvider = new EmptyTreeProvider(error.message);
-      vscode.window.registerTreeDataProvider(
-        'sfccContentAssets',
-        emptyTreeProvider
-      );
-
-      console.error('Failed to initialize SFCC connection:', error);
-    }
-  } catch (error: any) {
-    vscode.window.showErrorMessage(
-      `Failed to activate SFCC Content Updater: ${error.message}`
+  // Check if workspace is open
+  if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+    // No workspace open - show helpful message
+    const emptyTreeProvider = new EmptyTreeProvider(
+      'Open a folder with dw.json (File > Open Folder)',
+      true
     );
+    vscode.window.registerTreeDataProvider(
+      'sfccContentAssets',
+      emptyTreeProvider
+    );
+
+    // Listen for workspace folder changes
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        // Workspace changed - try to initialize
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+          initializeExtension(context);
+        }
+      })
+    );
+
+    console.log('No workspace open. Waiting for user to open a folder...');
+    return;
+  }
+
+  // Workspace is open - initialize
+  await initializeExtension(context);
+}
+
+/**
+ * Initialize the extension with SFCC connection
+ */
+async function initializeExtension(context: vscode.ExtensionContext): Promise<void> {
+  try {
+    const config = await configService.loadConfig();
+
+    // Initialize authentication service
+    authService = new AuthService(config);
+
+    // Initialize content service
+    contentService = new ContentAssetService(config, authService);
+
+    // Initialize tree view
+    const realTreeProvider = new ContentTreeProvider(contentService);
+    vscode.window.registerTreeDataProvider(
+      'sfccContentAssets',
+      realTreeProvider
+    );
+    contentTreeProvider = realTreeProvider;
+
+    // Test connection
+    await testConnection();
+
+    // Create status bar item
+    statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      100
+    );
+    statusBarItem.text = '$(cloud) SFCC';
+    statusBarItem.tooltip = `Connected to ${config.hostname}`;
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
+
+    // Register document change listeners
+    registerDocumentListeners(context);
+
+    vscode.window.showInformationMessage(
+      `✅ SFCC Content Updater connected to ${config.hostname}`
+    );
+  } catch (error: any) {
+    // Configuration error - show but still register tree view with error message
+    vscode.window.showErrorMessage(
+      `SFCC Content Updater: ${error.message}`
+    );
+
+    // Register empty tree view that shows the error
+    const emptyTreeProvider = new EmptyTreeProvider(error.message, false);
+    vscode.window.registerTreeDataProvider(
+      'sfccContentAssets',
+      emptyTreeProvider
+    );
+    contentTreeProvider = emptyTreeProvider;
+
+    console.error('Failed to initialize SFCC connection:', error);
   }
 }
 
